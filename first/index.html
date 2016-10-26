@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Glitchy Rabbit made by Cyril Resseguier</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/stats.min.js"></script>
+
+		<script src="js/three.js"></script>
+
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/DigitalGlitch.js"></script>
+
+		<script src="js/postprocessing/EffectComposer.js"></script>
+		<script src="js/postprocessing/RenderPass.js"></script>
+		<script src="js/postprocessing/MaskPass.js"></script>
+		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/GlitchPass.js"></script>
+
+		<script src="js/loaders/OBJLoader.js"></script>
+		<script>
+      var camera, scene, renderer, composer, stats;
+
+			var rabbit;
+			var lightNumber = 80;
+			var lightTab= [];
+
+			var glitchPass;
+
+      init();
+			animate();
+
+      /* Init Three.js Scene */
+      function init(){
+        camera = new THREE.PerspectiveCamera( 50, window.innerWidth/window.innerHeight, 1, 1000 );
+
+        /* Move camera 'cause element is 0,0,0 */
+        camera.position.z = 80;
+
+        scene = new THREE.Scene();
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '8px';
+				stats.domElement.style.zIndex = 100;
+
+				drawRabbit(scene);
+				drawingLights(scene);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+  			renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+				document.body.appendChild( stats.domElement );
+
+				// postprocessing
+				composer = new THREE.EffectComposer( renderer );
+				composer.addPass( new THREE.RenderPass( scene, camera ) );
+				glitchPass = new THREE.GlitchPass();
+				glitchPass.renderToScreen = true;
+				composer.addPass( glitchPass );
+      }
+
+      /* Drawing scene */
+      function drawingLights(scene){
+        var sphericalLight = new THREE.SphereGeometry(Math.random() * (0.3 - 0.05) + 0.05, 16, 16 );
+				for(var i=0; i<lightNumber; i++){
+					createLight(sphericalLight);
+				}
+
+				var directionalLight = new THREE.DirectionalLight( 0xffeeff );
+				directionalLight.position.set( 0, 0, 1 ).normalize();
+				scene.add( directionalLight );
+      }
+
+			/* Drawing Rabbit */
+			function drawRabbit(scene){
+				// texture
+				var texture = new THREE.Texture();
+
+				var onProgress = function ( xhr ) {
+					if ( xhr.lengthComputable ) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log( Math.round(percentComplete, 2) + '% downloaded' );
+					}
+				};
+
+				var onError = function ( xhr ) {
+				};
+
+				// model
+				var loader = new THREE.OBJLoader();
+				loader.load( 'Rabbit/Rabbit.obj',function ( object ) {
+					object.traverse( function ( child ) {
+						if ( child instanceof THREE.Mesh ) {
+							child.material.map = texture;
+						}
+					} );
+					object.scale.x = object.scale.y = object.scale.z = 20;
+					object.position.y = -10;
+
+					rabbit = object;
+
+					scene.add( rabbit );
+				}, onProgress, onError );
+			}
+
+			function createLight(sphere){
+				var rdColor = getRandomColor();
+				var light = new THREE.PointLight( rdColor, 2, 30 );
+				light.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color:rdColor } ) ) );
+				lightTab.push(light);
+				scene.add (light);
+			}
+
+			function getRandomColor() {
+					return '#' + (function co(lor){   return (lor +=
+						[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
+						&& (lor.length == 6) ?  lor : co(lor); })('');
+			}
+
+      /* Animate */
+      function animate(){
+				requestAnimationFrame( animate );
+
+				render();
+
+				stats.update();
+      }
+
+      /* Render */
+      function render(){
+        var time = Date.now() * 0.0005;
+
+				if(rabbit !==undefined){
+					rabbit.rotation.y += 0.01;
+				}
+
+				for(var i=0; i<lightNumber; i++){
+					var light = lightTab[i];
+
+					var x  = Math.sin(time+i * (i+1)/10) * 20;
+					var y  = Math.cos(time+i * (i+1)/10) * 20;
+					var z  = Math.cos(time+i) * 40;
+
+					light.position.set(x, y, z);
+				}
+
+				composer.render();
+      	//renderer.render(scene, camera);
+      }
+
+		</script>
+	</body>
+</html>
