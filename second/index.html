@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>made by Cyril Resseguier</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/stats.min.js"></script>
+
+		<script src="js/three.js"></script>
+
+		<script>
+      var camera, scene, renderer, composer, stats;
+
+			var mirror;
+			var pyramidNumber = 80;
+			var pyramidTab= [];
+
+			var clock = new THREE.Clock();
+
+      init();
+			animate();
+
+      /* Init Three.js Scene */
+      function init(){
+        camera = new THREE.PerspectiveCamera( 100, window.innerWidth/window.innerHeight, 0.5, 20 );
+
+        /* Move camera 'cause element is 0,0,0 */
+        camera.position.z = 8.2;
+
+        scene = new THREE.Scene();
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '8px';
+				stats.domElement.style.zIndex = 100;
+
+				drawingPyramids(scene, renderer, camera);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  			renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0xffffff, 0);
+        document.body.appendChild( renderer.domElement );
+				document.body.appendChild( stats.domElement );
+
+      }
+
+      /* Drawing scene */
+      function drawingPyramids(scene, renderer, camera){
+				for(var i=0; i<pyramidNumber; i++){
+					var rdColor = getRandomColor();
+
+					var material = new THREE.MeshBasicMaterial( {color:"#001111", wireframe:true} );
+
+					var geometry = new THREE.CylinderGeometry( 0.01, 2*3, 2*3, 4 );
+
+					var cylinder = new THREE.Mesh( geometry, material );
+
+					var x  = 0;
+					var y  = 0;
+					var z  = 0;
+
+					cylinder.position.set(x, y, z);
+
+					if(i%2==0){
+						cylinder.rotation.set(i/2, 0, 0);
+					}
+
+					scene.add(cylinder);
+					pyramidTab.push(cylinder);
+				}
+
+				var directionalLight = new THREE.DirectionalLight( 0x00000 );
+				directionalLight.position.set( 0, 0, 1 ).normalize();
+				scene.add( directionalLight );
+      }
+
+
+			function getRandomColor() {
+					return '#' + (function co(lor){   return (lor +=
+						[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
+						&& (lor.length == 6) ?  lor : co(lor); })('');
+			}
+
+      /* Animate */
+      function animate(){
+				requestAnimationFrame( animate );
+
+				render();
+
+				stats.update();
+      }
+
+      /* Render */
+      function render(){
+        var time = Date.now() * 0.00005;
+
+				for(var i=0; i<pyramidNumber; i++){
+					var pyramid = pyramidTab[i];
+
+					var x = 0;
+					var y = 0;
+					var z = 0;
+
+					pyramid.rotation.x+= 0.005;
+					pyramid.rotation.y= 90;
+					pyramid.position.set(x, y, z);
+				}
+
+      	renderer.render(scene, camera);
+      }
+
+		</script>
+	</body>
+</html>
